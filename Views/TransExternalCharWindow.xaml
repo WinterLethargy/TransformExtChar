@@ -1,0 +1,661 @@
+﻿<Window x:Class="TransformExtChar.TransExternalCharWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:TransformExtChar" 
+        xmlns:vm="clr-namespace:TransformExtChar.ViewModel"
+        xmlns:v="clr-namespace:TransformExtChar.Views"
+        xmlns:cnvrt="clr-namespace:TransformExtChar.Infrastructure.Converters"
+        xmlns:infra="clr-namespace:TransformExtChar.Infrastructure"
+        xmlns:sys ="clr-namespace:System;assembly=System"
+        xmlns:core="clr-namespace:System;assembly=mscorlib"
+        xmlns:oxy="http://oxyplot.org/wpf"
+        xmlns:fa5="http://schemas.fontawesome.com/icons/"
+        mc:Ignorable="d"
+        x:Name="TransWindow"
+        Loaded="Window_Loaded"
+        Unloaded="Window_Unloaded"
+        Title="Внешняя характеристика трансформатора" MinWidth="1245" MinHeight="600" Width="1245">
+    <Window.DataContext>
+        <vm:TransExternalCharViewModel/>
+    </Window.DataContext>
+    <Window.Resources>
+        <core:Double x:Key="BasicFontSize">18</core:Double>
+        <core:Double x:Key="SubscribeFontSize">10</core:Double>
+        <SolidColorBrush x:Key="BackgroundColor" Color="LightGray"/>
+        <Thickness  x:Key="ButtonMargin" Left="0" Right="14" Top="6" Bottom="0" />
+        <cnvrt:FloatConverter x:Key="FloatConverter"/>
+        <cnvrt:TransformerTypeConverter x:Key="TransformerTypeConverter"/>
+        <cnvrt:StarOrTriangleConverter x:Key="StarOrTriangleConverter"/>
+        <cnvrt:BoolNotConverter x:Key="BoolNotConverter"/>
+    </Window.Resources>
+    <Grid Background="{StaticResource ResourceKey=BackgroundColor}">
+        <Grid.RowDefinitions >
+            <RowDefinition Height="*" MinHeight="250" MaxHeight="{Binding ElementName=TransformerParameter, Path=MaxHeight}"/>
+            <RowDefinition Height="2*" MinHeight="300"/>
+        </Grid.RowDefinitions>
+        <!--Панели ввода всех параметров и изображение схемы замещения-->
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <!--Панели с параметрами трансформатора-->
+            <Border 
+                x:Name="TransformerParameter"
+                Grid.Column="0" 
+                Margin="3" 
+                Padding="3" 
+                BorderThickness="3" 
+                BorderBrush="Gray" 
+                CornerRadius="7" 
+                MinWidth="350" 
+                MaxHeight="512" 
+                HorizontalAlignment="Left" 
+                VerticalAlignment="Top">
+                <TabControl Background="{StaticResource BackgroundColor}">
+                    <TabControl.Resources>
+                        <core:Double x:Key="ImageAwesomeHeight">18</core:Double>
+                        <Thickness x:Key="ButtonMargin">0 0 3 0</Thickness>
+                    </TabControl.Resources>
+                    <!--Т схема замещения-->
+                    <TabItem>
+                        <TabItem.Header>T схема замещения</TabItem.Header>
+                        <DockPanel>
+                            <!--Панель с командами-->
+                            <WrapPanel DockPanel.Dock="Top" Margin="3">
+                                <Button Margin="{StaticResource ResourceKey=ButtonMargin}"
+                                        Command="{Binding CalcExtCharFromEquivalentCurcuitCommand}"
+                                        ToolTip="{Binding CalcExtCharFromEquivalentCurcuitCommand.Text}">
+                                    <fa5:ImageAwesome Icon="Solid_ChartLine" Height="{StaticResource ResourceKey=ImageAwesomeHeight}"/>
+                                </Button>
+                                <Button Margin="{StaticResource ResourceKey=ButtonMargin}"
+                                        Command="{Binding SaveTransToJsonCommand}"
+                                        CommandParameter="{Binding Transformer}"
+                                        ToolTip="{Binding SaveTransToJsonCommand.Text}">
+                                    <fa5:ImageAwesome Icon="Solid_FileImport" Height="{StaticResource ResourceKey=ImageAwesomeHeight}"/>
+                                </Button>
+                                <Button Margin="{StaticResource ResourceKey=ButtonMargin}"
+                                        Command="{Binding OpenTransFromJsonCommand}"
+                                        CommandParameter="{Binding Transformer}"
+                                        ToolTip="{Binding OpenTransFromJsonCommand.Text}">
+                                    <fa5:ImageAwesome Icon="Solid_FileExport" Height="{StaticResource ResourceKey=ImageAwesomeHeight}"/>
+                                </Button>
+                                <Button Margin="{StaticResource ResourceKey=ButtonMargin}"
+                                        Command="{Binding ClearFieldsCommand}"
+                                        CommandParameter="{Binding Transformer}"
+                                        ToolTip="{Binding ClearFieldsCommand.Text}">
+                                    <fa5:ImageAwesome Icon="Solid_Times" Height="{StaticResource ResourceKey=ImageAwesomeHeight}"/>
+                                </Button>
+                            </WrapPanel>
+                            <Separator DockPanel.Dock="Top"/>
+                            <!--Панель с полями ввода-->
+                            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                <StackPanel DataContext="{Binding Transformer}">
+                                    <v:TransformerConfigSelector DataContext="{Binding TransformerConfig}"
+                                                                 FontSize="{StaticResource BasicFontSize}"/>
+                                    <Separator/>
+                                    <StackPanel DataContext="{Binding EquivalentCurcuit}">
+                                    <Grid ToolTip="{Binding Source={StaticResource ToolTipHelper}, Path=ToolTipDictionary[K]}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="2*"/>
+                                            <ColumnDefinition Width="3*"/>
+                                            <ColumnDefinition Width="6*"/>
+                                        </Grid.ColumnDefinitions>
+                                            <Label Grid.Column="0" HorizontalAlignment="Left" FontSize="{StaticResource BasicFontSize}">K:</Label>
+                                        <TextBox Grid.Column="1" 
+                                                 Margin="1" 
+                                                 FontSize="{StaticResource BasicFontSize}"
+                                                 Text="{Binding Path=K, Mode=TwoWay, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource FloatConverter}}"/>
+                                    </Grid>
+                                    <Grid ToolTip="{Binding Source={StaticResource ToolTipHelper}, Path=ToolTipDictionary[R1]}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="2*"/>
+                                            <ColumnDefinition Width="3*"/>
+                                            <ColumnDefinition Width="6*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Label Grid.Column="0"
+                                               HorizontalAlignment="Left">
+                                            <TextBlock>
+                                                <Run Text="r" FontSize="{StaticResource BasicFontSize}"/><Run Text="1" FontSize="{StaticResource SubscribeFontSize}"/><Run Text=":" FontSize="{StaticResource BasicFontSize}"/>
+                                            </TextBlock>
+                                        </Label>
+                                        <TextBox Grid.Column="1"  
+                                                 Margin="1" 
+                                                 FontSize="{StaticResource BasicFontSize}"
+                                                 Text="{Binding Path=R1, Mode=TwoWay, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource FloatConverter}}"/>
+                                        <Label Grid.Column="2"
+                                               HorizontalAlignment="Left"
+                                               FontSize="{StaticResource BasicFontSize}"
+                                               Content="Ом"/>
+                                    </Grid>
+                                    <Grid ToolTip="{Binding Source={StaticResource ToolTipHelper}, Path=ToolTipDictionary[X1]}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="2*"/>
+                                            <ColumnDefinition Width="3*"/>
+                                            <ColumnDefinition Width="6*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Label Grid.Column="0" 
+                                               HorizontalAlignment="Left">
+                                            <TextBlock>
+                                                <Run Text="x" FontSize="{StaticResource BasicFontSize}"/><Run Text="1" FontSize="{StaticResource SubscribeFontSize}"/><Run Text=":" FontSize="{StaticResource BasicFontSize}"/>
+                                            </TextBlock>
+                                        </Label>
+                                        <TextBox Grid.Column="1" 
+                                                 Margin="1" 
+                                                 FontSize="{StaticResource BasicFontSize}"
+                                                 Text="{Binding Path=X1, Mode=TwoWay, Converter={StaticResource FloatConverter}}"/>
+                                        <Label Grid.Column="2"
+                                               HorizontalAlignment="Left"
+                                               FontSize="{StaticResource BasicFontSize}"
+                                               Content="Ом"/>
+                                    </Grid>
+                                    <Grid ToolTip="{Binding Source={StaticResource ToolTipHelper}, Path=ToolTipDictionary[R2_Corrected]}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="2*"/>
+                                            <ColumnDefinition Width="3*"/>
+                                            <ColumnDefinition Width="6*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Label Grid.Column="0"
+                                               HorizontalAlignment="Left">
+                                            <TextBlock>
+                                                <Run Text="r'" FontSize="{StaticResource BasicFontSize}"/><Run Text="2" FontSize="{StaticResource SubscribeFontSize}"/><Run Text=":" FontSize="{StaticResource BasicFontSize}"/>
+                                            </TextBlock>
+                                        </Label>
+                                        <TextBox Grid.Column="1" 
+                                                 Margin="1" 
+                                                 FontSize="{StaticResource BasicFontSize}"
+                                                 Text="{Binding Path=R2_Corrected, Mode=TwoWay, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource FloatConverter}}"/>
+                                        <Label Grid.Column="2"
+                                               HorizontalAlignment="Left"
+                                               FontSize="{StaticResource BasicFontSize}"
+                                               Content="Ом"/>
+                                    </Grid>
+                                    <Grid ToolTip="{Binding Source={StaticResource ToolTipHelper}, Path=ToolTipDictionary[X2_Corrected]}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="2*"/>
+                                            <ColumnDefinition Width="3*"/>
+                                            <ColumnDefinition Width="6*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Label Grid.Column="0" 
+                                               HorizontalAlignment="Left">
+                                            <TextBlock>
+                                                <Run Text="x'" FontSize="{StaticResource BasicFontSize}"/><Run Text="2" FontSize="{StaticResource SubscribeFontSize}"/><Run Text=":" FontSize="{StaticResource BasicFontSize}"/>
+                                            </TextBlock>
+                                        </Label>
+                                        <TextBox Grid.Column="1"
+                                                 Margin="1"
+                                                 FontSize="{StaticResource BasicFontSize}"
+                                                 Text="{Binding Path=X2_Corrected, Mode=TwoWay, Converter={StaticResource FloatConverter}}"/>
+                                        <Label Grid.Column="2"
+                                               HorizontalAlignment="Left"
+                                               FontSize="{StaticResource BasicFontSize}"
+                                               Content="Ом"/>
+                                    </Grid>
+                                    <Grid ToolTip="{Binding Source={StaticResource ToolTipHelper}, Path=ToolTipDictionary[Rm]}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="2*"/>
+                                            <ColumnDefinition Width="3*"/>
+                                            <ColumnDefinition Width="6*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Label Grid.Column="0" 
+                                               HorizontalAlignment="Left">
+                                            <TextBlock>
+                                                <Run Text="r" FontSize="{StaticResource BasicFontSize}"/><Run Text="m" FontSize="{StaticResource SubscribeFontSize}"/><Run Text=":" FontSize="{StaticResource BasicFontSize}"/>
+                                            </TextBlock>
+                                        </Label>
+                                        <TextBox Grid.Column="1"
+                                                 Margin="1" 
+                                                 FontSize="{StaticResource BasicFontSize}"
+                                                 Text="{Binding Path=Rm, Mode=TwoWay, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource FloatConverter}}"/>
+                                        <Label Grid.Column="2" 
+                                               HorizontalAlignment="Left"
+                                               FontSize="{StaticResource BasicFontSize}"
+                                               Content="Ом"/>
+                                    </Grid>
+                                    <Grid ToolTip="{Binding Source={StaticResource ToolTipHelper}, Path=ToolTipDictionary[Xm]}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="2*"/>
+                                            <ColumnDefinition Width="3*"/>
+                                            <ColumnDefinition Width="6*"/>
+                                        </Grid.ColumnDefinitions>
+                                            <Label Grid.Column="0" MinWidth="30" HorizontalAlignment="Left">
+                                            <TextBlock>
+                                                <Run Text="x" FontSize="{StaticResource BasicFontSize}"/><Run Text="m" FontSize="{StaticResource SubscribeFontSize}"/><Run Text=":" FontSize="{StaticResource BasicFontSize}"/>
+                                            </TextBlock>
+                                        </Label>
+                                        <TextBox Grid.Column="1" 
+                                                 Margin="1" 
+                                                 FontSize="{StaticResource BasicFontSize}"
+                                                 Text="{Binding Path=Xm, Mode=TwoWay, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource FloatConverter}}"/>
+                                        <Label Grid.Column="2" 
+                                               HorizontalAlignment="Left"
+                                               FontSize="{StaticResource BasicFontSize}"
+                                               Content="Ом"/>
+                                    </Grid>
+                                </StackPanel>
+                                </StackPanel>
+                               
+                            </ScrollViewer>
+                        </DockPanel>
+                    </TabItem>
+                    <!--Паспортные данные-->
+                    <TabItem>
+                        <TabItem.Header>Паспортные данные</TabItem.Header>
+                        <DockPanel>
+                            <!--Панель с командами-->
+                            <WrapPanel DockPanel.Dock="Top" Margin="3">
+                                <Button Margin="{StaticResource ResourceKey=ButtonMargin}"
+                                        Command="{Binding CalcExtCharFromDataSheetCommand}"
+                                        ToolTip="{Binding CalcExtCharFromDataSheetCommand.Text}">
+                                    <fa5:ImageAwesome Icon="Solid_ChartLine" Height="{StaticResource ResourceKey=ImageAwesomeHeight}"/>
+                                </Button>
+                                <Button Margin="{StaticResource ResourceKey=ButtonMargin}" FontWeight="Bold" FontSize="15" Padding="6 0"
+                                        Command="{Binding CalcTransformerFromDataSheetCommand}"
+                                        ToolTip="{Binding CalcTransformerFromDataSheetCommand.Text}">
+                                    Т
+                                </Button>
+                                <Button Margin="{StaticResource ResourceKey=ButtonMargin}"
+                                        Command="{Binding SaveTransToJsonCommand}"
+                                        CommandParameter="{Binding DataSheet}"
+                                        ToolTip="{Binding SaveTransToJsonCommand.Text}">
+                                    <fa5:ImageAwesome Icon="Solid_FileImport" Height="{StaticResource ResourceKey=ImageAwesomeHeight}"/>
+                                </Button>
+                                <Button Margin="{StaticResource ResourceKey=ButtonMargin}"
+                                        Command="{Binding OpenTransFromJsonCommand}"
+                                        CommandParameter="{Binding DataSheet}"
+                                        ToolTip="{Binding OpenTransFromJsonCommand.Text}">
+                                    <fa5:ImageAwesome Icon="Solid_FileExport" Height="{StaticResource ResourceKey=ImageAwesomeHeight}"/>
+                                </Button>
+                                <Button Margin="{StaticResource ResourceKey=ButtonMargin}"
+                                        Command="{Binding ClearFieldsCommand}"
+                                        CommandParameter="{Binding DataSheet}"
+                                        ToolTip="{Binding ClearFieldsCommand.Text}">
+                                    <fa5:ImageAwesome Icon="Solid_Times" Height="{StaticResource ResourceKey=ImageAwesomeHeight}"/>
+                                </Button>
+                            </WrapPanel>
+                            <Separator DockPanel.Dock="Top"/>
+                            <!--Панель с полями ввода-->
+                            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                <StackPanel DataContext="{Binding DataSheet}">
+                                    <v:TransformerConfigSelector DataContext="{Binding TransformerConfig}"
+                                                                 FontSize="{StaticResource BasicFontSize}"/>
+                                    <Separator/>
+                                    <StackPanel>
+                                    <Grid ToolTip="{Binding Source={StaticResource ToolTipHelper}, Path=ToolTipDictionary[U1r]}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition x:Name="FirstColumn" Width="2*"/>
+                                            <ColumnDefinition x:Name="SecondColumn" Width="3*"/>
+                                            <ColumnDefinition x:Name="ThirdColumn" Width="6*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Label Grid.Column="0"
+                                               HorizontalAlignment="Left">
+                                            <TextBlock>
+                                                <Run Text="U" FontSize="{StaticResource BasicFontSize}"/><Run Text="1 ном" FontSize="{StaticResource SubscribeFontSize}"/><Run Text=":" FontSize="{StaticResource BasicFontSize}"/>
+                                            </TextBlock>
+                                        </Label>
+                                        <TextBox Grid.Column="1"
+                                                 Margin="1"
+                                                 FontSize="{StaticResource BasicFontSize}"
+                                                 Text="{Binding Path=U1r, Mode=TwoWay, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource FloatConverter}}"/>
+                                        <Label Grid.Column="2"
+                                               HorizontalAlignment="Left"
+                                               FontSize="{StaticResource BasicFontSize}"
+                                               Content="В"/>
+                                    </Grid>
+                                    <Grid ToolTip="{Binding Source={StaticResource ToolTipHelper}, Path=ToolTipDictionary[U2r]}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="{Binding ElementName=FirstColumn, Path=Width}"/>
+                                            <ColumnDefinition Width="{Binding ElementName=SecondColumn, Path=Width}"/>
+                                            <ColumnDefinition Width="{Binding ElementName=ThirdColumn, Path=Width}"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Label Grid.Column="0"
+                                               HorizontalAlignment="Left">
+                                            <TextBlock>
+                                                <Run Text="U" FontSize="{StaticResource BasicFontSize}"/><Run Text="2 ном" FontSize="{StaticResource SubscribeFontSize}"/><Run Text=":" FontSize="{StaticResource BasicFontSize}"/>
+                                            </TextBlock>
+                                        </Label>
+                                        <TextBox Grid.Column="1" 
+                                                 Margin="1" 
+                                                 FontSize="{StaticResource BasicFontSize}"
+                                                 Text="{Binding Path=U2r, Mode=TwoWay, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource FloatConverter}}"/>
+                                        <Label Grid.Column="2"
+                                               HorizontalAlignment="Left"
+                                               FontSize="{StaticResource BasicFontSize}"
+                                               Content="В"/>
+                                    </Grid>
+                                    <Grid ToolTip="{Binding Source={StaticResource ToolTipHelper}, Path=ToolTipDictionary[I1r]}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="{Binding ElementName=FirstColumn, Path=Width}"/>
+                                            <ColumnDefinition Width="{Binding ElementName=SecondColumn, Path=Width}"/>
+                                            <ColumnDefinition Width="{Binding ElementName=ThirdColumn, Path=Width}"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Label Grid.Column="0"
+                                               HorizontalAlignment="Left">
+                                            <TextBlock>
+                                                <Run Text="I" FontSize="{StaticResource BasicFontSize}"/><Run Text="1 ном" FontSize="{StaticResource SubscribeFontSize}"/><Run Text=":" FontSize="{StaticResource BasicFontSize}"/>
+                                            </TextBlock>
+                                        </Label>
+                                        <TextBox Grid.Column="1" 
+                                                 Margin="1" 
+                                                 FontSize="{StaticResource BasicFontSize}"
+                                                 Text="{Binding Path=I1r, Mode=TwoWay, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource FloatConverter}}"/>
+                                        <Label Grid.Column="2"
+                                               HorizontalAlignment="Left"
+                                               FontSize="{StaticResource BasicFontSize}"
+                                               Content="А"/>
+                                    </Grid>
+                                    <Grid ToolTip="{Binding Source={StaticResource ToolTipHelper}, Path=ToolTipDictionary[I0]}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="4*"/>
+                                            <ColumnDefinition Width="6*"/>
+                                            <ColumnDefinition Width="3*"/>
+                                            <ColumnDefinition Width="6*"/>
+                                            <ColumnDefinition Width="3*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Label Grid.Column="0"
+                                               HorizontalAlignment="Left">
+                                            <TextBlock>
+                                                <Run Text="I" FontSize="{StaticResource BasicFontSize}"/><Run Text="0" FontSize="{StaticResource SubscribeFontSize}"/><Run Text=":" FontSize="{StaticResource BasicFontSize}"/>
+                                            </TextBlock>
+                                        </Label>
+                                        <TextBox Grid.Column="1" 
+                                                 Margin="1" 
+                                                 FontSize="{StaticResource BasicFontSize}"
+                                                 Text="{Binding Path=I0_Percent, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource FloatConverter}}"
+                                                 ToolTip="{Binding Source={StaticResource ToolTipHelper}, Path=ToolTipDictionary[I0_Percent]}"/>
+                                        <Label Grid.Column="2"
+                                               HorizontalAlignment="Left"
+                                               FontSize="{StaticResource BasicFontSize}"
+                                               Content="%"/>
+                                        <TextBox Grid.Column="3"
+                                                 Margin="1" 
+                                                 FontSize="{StaticResource BasicFontSize}"
+                                                 Text="{Binding Path=I0, Mode=TwoWay, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource FloatConverter}}"/>
+                                        <Label Grid.Column="4"
+                                               HorizontalAlignment="Left"
+                                               FontSize="{StaticResource BasicFontSize}"
+                                               Content="А"/>
+                                    </Grid>
+                                    <Grid ToolTip="{Binding Source={StaticResource ToolTipHelper}, Path=ToolTipDictionary[P0]}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="{Binding ElementName=FirstColumn, Path=Width}"/>
+                                            <ColumnDefinition Width="{Binding ElementName=SecondColumn, Path=Width}"/>
+                                            <ColumnDefinition Width="{Binding ElementName=ThirdColumn, Path=Width}"/>
+                                        </Grid.ColumnDefinitions>
+                                            <Label Grid.Column="0" HorizontalAlignment="Left">
+                                            <TextBlock>
+                                                <Run Text="P" FontSize="{StaticResource BasicFontSize}"/><Run Text="0" FontSize="{StaticResource SubscribeFontSize}"/><Run Text=":" FontSize="{StaticResource BasicFontSize}"/>
+                                            </TextBlock>
+                                         </Label>
+                                        <TextBox Grid.Column="1"
+                                                 Margin="1"
+                                                 FontSize="{StaticResource BasicFontSize}"
+                                                 Text="{Binding Path=P0, Mode=TwoWay, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource FloatConverter}}"/>
+                                        <Label Grid.Column="2"
+                                               HorizontalAlignment="Left"
+                                               FontSize="{StaticResource BasicFontSize}"
+                                               Content="Вт"/>
+                                    </Grid>
+                                    <Grid ToolTip="{Binding Source={StaticResource ToolTipHelper}, Path=ToolTipDictionary[U1sc]}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="4*"/>
+                                            <ColumnDefinition Width="6*"/>
+                                            <ColumnDefinition Width="3*"/>
+                                            <ColumnDefinition Width="6*"/>
+                                            <ColumnDefinition Width="3*"/>
+                                        </Grid.ColumnDefinitions>
+                                            <Label Grid.Column="0" HorizontalAlignment="Left">
+                                            <TextBlock>
+                                                <Run Text="U" FontSize="{StaticResource BasicFontSize}"/><Run Text="1кз" FontSize="{StaticResource SubscribeFontSize}"/><Run Text=":" FontSize="{StaticResource BasicFontSize}"/>
+                                            </TextBlock>
+                                        </Label>
+                                        <TextBox Grid.Column="1" 
+                                                 Margin="1"
+                                                 FontSize="{StaticResource BasicFontSize}"
+                                                 Text="{Binding Path=U1sc_Percent, Mode=TwoWay, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource FloatConverter}}"
+                                                 ToolTip="{Binding Source={StaticResource ToolTipHelper}, Path=ToolTipDictionary[U1sc_Percent]}"/>
+                                        <Label Grid.Column="2"
+                                               HorizontalAlignment="Left"
+                                               FontSize="{StaticResource BasicFontSize}"
+                                               Content="%"/>
+                                        <TextBox Grid.Column="3" 
+                                                 Margin="1" 
+                                                 FontSize="{StaticResource BasicFontSize}"
+                                                 Text="{Binding Path=U1sc, Mode=TwoWay, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource FloatConverter}}"/>
+                                        <Label Grid.Column="4"
+                                               HorizontalAlignment="Left"
+                                               FontSize="{StaticResource BasicFontSize}"
+                                               Content="В"/>
+                                    </Grid>
+                                    <Grid ToolTip="{Binding Source={StaticResource ToolTipHelper}, Path=ToolTipDictionary[Psc]}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="{Binding ElementName=FirstColumn, Path=Width}"/>
+                                            <ColumnDefinition Width="{Binding ElementName=SecondColumn, Path=Width}"/>
+                                            <ColumnDefinition Width="{Binding ElementName=ThirdColumn, Path=Width}"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Label Grid.Column="0" 
+                                               HorizontalAlignment="Left">
+                                            <TextBlock>
+                                                <Run Text="P" FontSize="{StaticResource BasicFontSize}"/><Run Text="кз" FontSize="{StaticResource SubscribeFontSize}"/><Run Text=":" FontSize="{StaticResource BasicFontSize}"/>
+                                            </TextBlock>
+                                            </Label>
+                                        <TextBox Grid.Column="1" 
+                                                 Margin="1" 
+                                                 FontSize="{StaticResource BasicFontSize}"
+                                                 Text="{Binding Path=Psc, Mode=TwoWay, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource FloatConverter}}"/>
+                                        <Label Grid.Column="2"
+                                               HorizontalAlignment="Left"
+                                               FontSize="{StaticResource BasicFontSize}"
+                                               Content="Вт"/>
+                                    </Grid>
+                                </StackPanel>
+                                </StackPanel>
+                                
+                            </ScrollViewer>
+                        </DockPanel>
+                    </TabItem>
+                </TabControl>
+            </Border>
+            <!--Изображение схемы замещения-->
+            <Image Grid.Column="1" Stretch="None" MaxHeight="245" HorizontalAlignment="Center" VerticalAlignment="Top">
+                <Image.Source>
+                    <BitmapImage DecodePixelWidth="500" UriSource="/equivalent circuit.png"/>
+                </Image.Source>
+            </Image>
+            <!--Тип трансформатора и параметры расчетного режима-->
+            <Border Grid.Column="2" Margin="3" BorderThickness="3" BorderBrush="Gray" CornerRadius="7" MinWidth="350" MaxHeight="245" HorizontalAlignment="Right" VerticalAlignment="Top">
+                <ScrollViewer Margin="3" VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <!--Параметры расчетного режима-->
+                        <StackPanel DataContext="{Binding ModeParameters}">
+                            <TextBlock Margin="0 5 0 5"
+                                       FontSize="{StaticResource BasicFontSize}"
+                                       Text="Параметры расчетного режима:"/>
+                            <Grid ToolTip="{Binding Source={StaticResource ToolTipHelper}, Path=ToolTipDictionary[U1]}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="2*"/>
+                                    <ColumnDefinition Width="3*"/>
+                                    <ColumnDefinition Width="6*"/>
+                                </Grid.ColumnDefinitions>
+                                <Label Grid.Column="0" MinWidth="30" HorizontalAlignment="Right">
+                                    <TextBlock>
+                                        <Run Text="U" FontSize="{StaticResource BasicFontSize}"/><Run Text="1" FontSize="{StaticResource SubscribeFontSize}"/><Run Text=":" FontSize="{StaticResource BasicFontSize}"/>
+                                    </TextBlock>
+                                </Label>
+                                <TextBox Grid.Column="1" 
+                                         Margin="1" 
+                                         FontSize="{StaticResource BasicFontSize}"
+                                         Text="{Binding Path=U1, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource FloatConverter}}"/>
+                                <Label Grid.Column="2" 
+                                       MinWidth="30" 
+                                       HorizontalAlignment="Left"
+                                       FontSize="{StaticResource BasicFontSize}"
+                                       Content="В"/>
+                            </Grid>
+                            <Grid ToolTip="{Binding Source={StaticResource ToolTipHelper}, Path=ToolTipDictionary[Fi2]}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="2*"/>
+                                    <ColumnDefinition Width="3*"/>
+                                    <ColumnDefinition Width="6*"/>
+                                </Grid.ColumnDefinitions>
+                                <Label Grid.Column="0" MinWidth="30" HorizontalAlignment="Right">
+                                    <TextBlock>
+                                        <Run Text="φ" FontSize="{StaticResource BasicFontSize}"/><Run Text="2" FontSize="{StaticResource SubscribeFontSize}"/><Run Text=":" FontSize="{StaticResource BasicFontSize}"/>
+                                    </TextBlock>
+                                </Label>
+                                <TextBox Grid.Column="1" 
+                                         Margin="1" 
+                                         FontSize="{StaticResource BasicFontSize}"
+                                         Text="{Binding Path=Fi2, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource FloatConverter}}"/>
+                                <Label Grid.Column="2" 
+                                       MinWidth="30" 
+                                       FontSize="{StaticResource BasicFontSize}"
+                                       HorizontalAlignment="Left"
+                                       Content="Градусы"/>
+                            </Grid>
+                            <Grid ToolTip="{Binding Source={StaticResource ToolTipHelper}, Path=ToolTipDictionary[I2_start]}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="2*"/>
+                                    <ColumnDefinition Width="3*"/>
+                                    <ColumnDefinition Width="6*"/>
+                                </Grid.ColumnDefinitions>
+                                <Label Grid.Column="0" MinWidth="30" HorizontalAlignment="Right">
+                                    <TextBlock>
+                                        <Run Text="I" FontSize="{StaticResource BasicFontSize}"/><Run Text="2 н" FontSize="{StaticResource SubscribeFontSize}"/><Run Text=":" FontSize="{StaticResource BasicFontSize}"/>
+                                    </TextBlock>
+                                </Label>
+                                <TextBox Grid.Column="1" 
+                                         Margin="1" 
+                                         FontSize="{StaticResource BasicFontSize}"
+                                         Text="{Binding Path=I2_start, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource FloatConverter}}"
+                                         IsEnabled="{Binding ElementName=fullExtChar, Path=IsChecked, Converter={StaticResource BoolNotConverter}}"/>
+                                <Label Grid.Column="2" 
+                                       MinWidth="30" 
+                                       HorizontalAlignment="Left"
+                                       FontSize="{StaticResource BasicFontSize}"
+                                       Content="А (начальный ток)"/>
+                            </Grid>
+                            <Grid ToolTip="{Binding Source={StaticResource ToolTipHelper}, Path=ToolTipDictionary[I2_end]}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="2*"/>
+                                    <ColumnDefinition Width="3*"/>
+                                    <ColumnDefinition Width="6*"/>
+                                </Grid.ColumnDefinitions>
+                                <Label Grid.Column="0" MinWidth="30" HorizontalAlignment="Right">
+                                    <TextBlock>
+                                        <Run Text="I" FontSize="{StaticResource BasicFontSize}"/><Run Text="2 к" FontSize="{StaticResource SubscribeFontSize}"/><Run Text=":" FontSize="{StaticResource BasicFontSize}"/>
+                                    </TextBlock>
+                                </Label>
+                                <TextBox Grid.Column="1" 
+                                         Margin="1" 
+                                         FontSize="{StaticResource BasicFontSize}"
+                                         Text="{Binding Path=I2_end, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource FloatConverter}}"
+                                         IsEnabled="{Binding ElementName=fullExtChar, Path=IsChecked, Converter={StaticResource BoolNotConverter}}"/>
+                                <Label Grid.Column="2" 
+                                       MinWidth="30" 
+                                       HorizontalAlignment="Left"
+                                       FontSize="{StaticResource BasicFontSize}"
+                                       Content="А (конечный ток)"/>
+                            </Grid>
+                            <Grid ToolTip="{Binding Source={StaticResource ToolTipHelper}, Path=ToolTipDictionary[I2_step]}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="2*"/>
+                                    <ColumnDefinition Width="3*"/>
+                                    <ColumnDefinition Width="6*"/>
+                                </Grid.ColumnDefinitions>
+                                <Label Grid.Column="0" MinWidth="30" HorizontalAlignment="Right">
+                                    <TextBlock>
+                                        <Run Text="I" FontSize="{StaticResource BasicFontSize}"/><Run Text="2 шаг" FontSize="{StaticResource SubscribeFontSize}"/><Run Text=":" FontSize="{StaticResource BasicFontSize}"/>
+                                    </TextBlock>
+                                </Label>
+                                <TextBox Grid.Column="1" 
+                                         Margin="1" 
+                                         FontSize="{StaticResource BasicFontSize}"
+                                         Text="{Binding Path=I2_step, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource FloatConverter}}"/>
+                                <Label Grid.Column="2" 
+                                       MinWidth="30" 
+                                       HorizontalAlignment="Left" 
+                                       FontSize="{StaticResource BasicFontSize}" 
+                                       Content="А (шаг)"/>
+                            </Grid>
+                        </StackPanel>
+                        <CheckBox x:Name="fullExtChar" 
+                                  Margin="15 3 0 0"
+                                  FontSize="{StaticResource BasicFontSize}" 
+                                  Content="Построить от хх до кз" 
+                                  IsChecked="{Binding FullChar, Mode=OneWayToSource}"/>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+        <!--Плоттер с кнопками управления-->
+        
+        <DockPanel Grid.Row="1" Margin="5" DataContext="{Binding PlotterVM}">
+            <DockPanel.Resources>
+                <core:Double x:Key="ImageAwesomeHeight">18</core:Double>
+                <Thickness x:Key="ButtonMargin">0 0 3 0</Thickness>
+            </DockPanel.Resources>
+            <!--Панель с командами-->
+            <WrapPanel DockPanel.Dock="Top" Margin="0 0 0 4">
+                <Button Margin="{StaticResource ResourceKey=ButtonMargin}" 
+                        Click="RefreshAxis" 
+                        ToolTip="Сбросить оси"
+                        ToolTipService.ShowOnDisabled="True">
+                    <fa5:ImageAwesome Icon="Solid_Sync" Height="{StaticResource ResourceKey=ImageAwesomeHeight}"/>
+                </Button>
+                <Button Margin="{StaticResource ResourceKey=ButtonMargin}" Padding="4 0" 
+                        Command="{Binding FixSeriesCommand}" 
+                        ToolTip="{Binding Path=FixSeriesCommand.Text}" 
+                        ToolTipService.ShowOnDisabled="True">
+                    <fa5:ImageAwesome Icon="Solid_Thumbtack" Height="{StaticResource ResourceKey=ImageAwesomeHeight}"/>
+                </Button>
+                <Button Margin="{StaticResource ResourceKey=ButtonMargin}" 
+                        Command="{Binding DeleteHiddenSeriesCommand}" 
+                        ToolTip="{Binding Path=DeleteHiddenSeriesCommand.Text}"
+                        ToolTipService.ShowOnDisabled="True">
+                    <fa5:ImageAwesome Icon="Solid_Eraser" Height="{StaticResource ResourceKey=ImageAwesomeHeight}"/>
+                </Button>
+                <Button Margin="{StaticResource ResourceKey=ButtonMargin}" 
+                        Command="{Binding AddSeriesFromFileCommand}" 
+                        ToolTip="{Binding Path=AddSeriesFromFileCommand.Text}"
+                        ToolTipService.ShowOnDisabled="True">
+                    <fa5:ImageAwesome Icon="Solid_FileExport" Height="{StaticResource ResourceKey=ImageAwesomeHeight}"/>
+                </Button>
+                <Button Margin="{StaticResource ResourceKey=ButtonMargin}" Padding="4 0" 
+                        Command="{Binding SavePNGCommand}" 
+                        CommandParameter="{Binding ElementName=PlotView}"
+                        ToolTip="{Binding Path=SavePNGCommand.Text}"
+                        ToolTipService.ShowOnDisabled="True">
+                    <fa5:ImageAwesome Icon="Regular_FileImage" Height="{StaticResource ResourceKey=ImageAwesomeHeight}"/>
+                </Button>
+            </WrapPanel>
+            <Border Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" >
+                 <oxy:PlotView 
+                         x:Name="PlotView"
+                         Model="{Binding Plotter}"
+                         AllowDrop="True" Drop="Plotter_Drop">
+                      <oxy:PlotView.ContextMenu>
+                          <ContextMenu>
+                              <MenuItem Header="Сбросить оси" Click="RefreshAxis"/>
+                              <MenuItem Header="Зафиксировать график" Command="{Binding FixSeriesCommand}"/>
+                              <MenuItem Header="Удалить скрытые графики" Command="{Binding DeleteHiddenSeriesCommand}"/>
+                              <MenuItem Header="Загрузить график из CSV" x:Name="AddSeriesFromFileMenuItem" Command="{Binding AddSeriesFromFileCommand}"/>
+                              <MenuItem Header="Сохранить в PNG" Command="{Binding SavePNGCommand}" CommandParameter="{x:Reference Name=PlotView}"/>
+                          </ContextMenu>
+                      </oxy:PlotView.ContextMenu>
+            </oxy:PlotView>  
+            </Border>
+            
+        </DockPanel>
+        <GridSplitter 
+            Grid.Row="1" 
+            Grid.ColumnSpan="3" 
+            Height="3" 
+            VerticalAlignment="Top" 
+            HorizontalAlignment="Stretch" 
+            Background="DarkGray"/>
+    </Grid>
+</Window>
